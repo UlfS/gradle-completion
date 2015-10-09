@@ -5,13 +5,18 @@ LAST_MOD_FILE="$DIR/last_modified"
 CACHE_FILE="$DIR/cache"
 
 
-# get last modification time of all gradle filex
+# XXX: unused
+# get last modification time of all gradle files
 function __gradlew_lastModified() {
   find . -type f -iname '*.gradle' -print0 | xargs -0 stat -c %Y | sort | tail -n 1
 }
 
-# 1: timestamp to save
-function __gradlew_saveLastModified() {
+function __gradlew_hash() {
+  find . -type f -iname '*.gradle' -print0 | xargs -0 cat | md5sum
+}
+
+# 1: timestamp/hash to save
+function __gradlew_saveCacheIndicator() {
   [ ! -d "$DIR" ] && mkdir "$DIR"
   echo "$@" > "$LAST_MOD_FILE"
 }
@@ -26,17 +31,22 @@ function __gradlew_loadCache() {
   [ -f "$CACHE_FILE" ] && cat "$CACHE_FILE"
 }
 
+# XXX: unused
 function __gradlew_lastModifiedCached() {
   [ -f "$LAST_MOD_FILE" ] && cat "$LAST_MOD_FILE" || echo 0
 }
 
+function __gradlew_hashCached() {
+  [ -f "$LAST_MOD_FILE" ] && cat "$LAST_MOD_FILE" || echo "never-hashed-before"
+}
+
 function __gradlew_completions() {
-  local last_mod=$(__gradlew_lastModified)
-  local last_mod_cached=$(__gradlew_lastModifiedCached)
-  if [ "$last_mod" -ne "$last_mod_cached" ]
+  local hashed=$(__gradlew_hash)
+  local hashed_cache=$(__gradlew_hashCached)
+  if [ "$hashed" != "$hashed_cache" ]
   then
-    __gradlew_refreshCache "$last_mod"
-    __gradlew_saveLastModified "$last_mod"
+    __gradlew_refreshCache
+    __gradlew_saveCacheIndicator "$hashed"
   else
     __gradlew_loadCache
   fi
@@ -55,7 +65,7 @@ _gradlew() {
   local cur=${COMP_WORDS[COMP_CWORD]}
   _get_comp_words_by_ref -n : cur
   tasks=$(__gradlew_completions)
-  COMPREPLY=( $(compgen -W "$tasks" -- $cur) )
+  COMPREPLY=( $(compgen -W "$tasks" -- "$cur") )
 
   __ltrim_colon_completions "$cur"
 }
