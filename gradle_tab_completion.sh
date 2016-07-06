@@ -45,7 +45,7 @@ function __gradlew_completions() {
   local hashed_cache=$(__gradlew_hashCached)
   if [ "$hashed" != "$hashed_cache" ]
   then
-    __gradlew_refreshCache
+    __gradlew_refreshCache "$1"
     __gradlew_saveCacheIndicator "$hashed"
   else
     __gradlew_loadCache
@@ -53,7 +53,7 @@ function __gradlew_completions() {
 }
 
 function __gradlew_refreshCache() {
-  local tasks=$(./gradlew --quiet tasks --all | grep ' - ' | awk '{print $1}' | tr '\n' ' ')
+  local tasks=$($1 --quiet tasks --all | grep ' - ' | awk '{print $1}' | tr '\n' ' ')
   if [ -n "$tasks" ]
   then
     echo "$tasks"
@@ -64,10 +64,11 @@ function __gradlew_refreshCache() {
 _gradlew() {
   local cur=${COMP_WORDS[COMP_CWORD]}
   _get_comp_words_by_ref -n : cur
-  tasks=$(__gradlew_completions)
+  tasks=$(__gradlew_completions "$1")
   COMPREPLY=( $(compgen -W "$tasks" -- "$cur") )
 
   __ltrim_colon_completions "$cur"
 }
 
 complete -F _gradlew ./gradlew
+complete -F _gradlew gradle
