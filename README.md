@@ -36,6 +36,7 @@ be cached in `.gradle-tab` local to your current project/directory.
 ###  Aliases
 
 You can add `gradle` / `gradlew` aliases by adding the following line to your
-`.bashrc` / `.profile`: `complete -F _gradlew your_gradlew_alias`.
-When using an alias, the script will use `gradlew` in the current
-directory or `gradle` if the gradle wrapper cannot be found.
+`.bashrc` / `.profile`: `complete -F _gradle my_alias`.
+
+The script will use `gradlew` in the current directory or `gradle` if the gradle
+wrapper cannot be found.

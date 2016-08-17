@@ -7,59 +7,59 @@ CACHE_FILE="$DIR/cache"
 
 # XXX: unused
 # get last modification time of all gradle files
-function __gradlew_lastModified() {
+function __gradle_lastModified() {
   find . -type f -iname '*.gradle' -print0 | xargs -0 stat -c %Y | sort | tail -n 1
 }
 
-function __gradlew_hash() {
+function __gradle_hash() {
   find . -type f -iname '*.gradle' -print0 | xargs -0 cat | md5sum
 }
 
 # 1: timestamp/hash to save
-function __gradlew_saveCacheIndicator() {
+function __gradle_saveCacheIndicator() {
   [ ! -d "$DIR" ] && mkdir "$DIR"
   echo "$@" > "$LAST_MOD_FILE"
 }
 
 # 1: list of tab completions to save
-function __gradlew_saveCache() {
+function __gradle_saveCache() {
   [ ! -d "$DIR" ] && mkdir "$DIR"
   echo "$@" > "$CACHE_FILE"
 }
 
-function __gradlew_loadCache() {
+function __gradle_loadCache() {
   [ -f "$CACHE_FILE" ] && cat "$CACHE_FILE"
 }
 
 # XXX: unused
-function __gradlew_lastModifiedCached() {
+function __gradle_lastModifiedCached() {
   [ -f "$LAST_MOD_FILE" ] && cat "$LAST_MOD_FILE" || echo 0
 }
 
-function __gradlew_hashCached() {
+function __gradle_hashCached() {
   [ -f "$LAST_MOD_FILE" ] && cat "$LAST_MOD_FILE" || echo "never-hashed-before"
 }
 
-function __gradlew_completions() {
-  local hashed=$(__gradlew_hash)
-  local hashed_cache=$(__gradlew_hashCached)
+function __gradle_completions() {
+  local hashed=$(__gradle_hash)
+  local hashed_cache=$(__gradle_hashCached)
   if [ "$hashed" != "$hashed_cache" ]
   then
-    __gradlew_refreshCache "$1"
-    __gradlew_saveCacheIndicator "$hashed"
+    __gradle_refreshCache "$1"
+    __gradle_saveCacheIndicator "$hashed"
   fi
-  __gradlew_loadCache
+  __gradle_loadCache
 }
 
-function __gradlew_refreshCache() {
+function __gradle_refreshCache() {
   local tasks=$($1 --quiet tasks --all --console plain | grep '[[:space:]]*[[:alnum:]]\+ - ' | awk '{print $1}' | tr '\n' ' ')
   if [ $? -eq 0 -a -n "$tasks" ]
   then
-    __gradlew_saveCache "$tasks"
+    __gradle_saveCache "$tasks"
   fi
 }
 
-function __gradlew_guess_gradle_command() {
+function __gradle_guess_gradle_command() {
   if which "$1" 1>/dev/null ;then
     echo "$1"
   elif [ -x "./gradlew" ] ;then
@@ -74,9 +74,9 @@ function __gradlew_guess_gradle_command() {
   return 0
 }
 
-_gradlew() {
+_gradle() {
   local gradle
-  gradle_command=$(__gradlew_guess_gradle_command "$1")
+  gradle_command=$(__gradle_guess_gradle_command "$1")
 
   if [ $? -ne 0 ]; then
     return 1
@@ -84,11 +84,11 @@ _gradlew() {
 
   local cur=${COMP_WORDS[COMP_CWORD]}
   _get_comp_words_by_ref -n : cur
-  tasks=$(__gradlew_completions "$gradle_command")
+  tasks=$(__gradle_completions "$gradle_command")
   COMPREPLY=( $(compgen -W "$tasks" -- "$cur") )
 
   __ltrim_colon_completions "$cur"
 }
 
-complete -F _gradlew ./gradlew
-complete -F _gradlew gradle
+complete -F _gradle ./gradlew
+complete -F _gradle gradle
