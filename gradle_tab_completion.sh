@@ -47,24 +47,44 @@ function __gradlew_completions() {
   then
     __gradlew_refreshCache "$1"
     __gradlew_saveCacheIndicator "$hashed"
-  else
-    __gradlew_loadCache
   fi
+  __gradlew_loadCache
 }
 
 function __gradlew_refreshCache() {
-  local tasks=$($1 --quiet tasks --all | grep ' - ' | awk '{print $1}' | tr '\n' ' ')
-  if [ -n "$tasks" ]
+  local tasks=$($1 --quiet tasks --all --console plain | grep '[[:space:]]*[[:alnum:]]\+ - ' | awk '{print $1}' | tr '\n' ' ')
+  if [ $? -eq 0 -a -n "$tasks" ]
   then
-    echo "$tasks"
     __gradlew_saveCache "$tasks"
   fi
 }
 
+function __gradlew_guess_gradle_command() {
+  if which "$1" 1>/dev/null ;then
+    echo "$1"
+  elif [ -x "./gradlew" ] ;then
+    echo "./gradlew"
+  elif which "gradle" 1>/dev/null ;then
+    echo "gradle"
+  else
+    # cannot find gradle/gradlew
+    return 1
+  fi
+
+  return 0
+}
+
 _gradlew() {
+  local gradle
+  gradle_command=$(__gradlew_guess_gradle_command "$1")
+
+  if [ $? -ne 0 ]; then
+    return 1
+  fi
+
   local cur=${COMP_WORDS[COMP_CWORD]}
   _get_comp_words_by_ref -n : cur
-  tasks=$(__gradlew_completions "$1")
+  tasks=$(__gradlew_completions "$gradle_command")
   COMPREPLY=( $(compgen -W "$tasks" -- "$cur") )
 
   __ltrim_colon_completions "$cur"
